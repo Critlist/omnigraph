@@ -3,6 +3,7 @@
 ## ✅ What Has Been Implemented
 
 ### Core Components
+
 1. **Layer System** - Multi-layer DOM structure with proper z-indexing
    - Canvas Layer (z-index: 0)
    - Docked Layer with CSS Grid (z-index: 10)
@@ -36,6 +37,7 @@
 ## 🎮 How to Use the UI
 
 ### Keyboard Shortcuts
+
 - **Ctrl+B** - Toggle left panel (File Explorer)
 - **Ctrl+J** - Toggle bottom panel (Terminal/Output)
 - **Ctrl+\\** - Toggle right panel (Properties)
@@ -45,6 +47,7 @@
 - **F11** - Fullscreen (browser feature)
 
 ### UI Controls
+
 - **Toggle Panels Button** (📊) - Show/hide all panels
 - **Panel Headers** - Drag to move (when floating), click buttons to:
   - Collapse/expand (chevron)
@@ -52,13 +55,14 @@
   - Close panel (X)
 
 ### Splitters
+
 - Drag the thin lines between panels to resize
 - Use arrow keys while dragging for precise control
 - ESC to cancel resize
 
 ## 📁 File Structure
 
-```
+```tree
 src/
 ├── state/
 │   ├── panels.ts         # Panel state management
@@ -100,14 +104,17 @@ These features are defined in the UI_PLAN.md but not yet built:
 ## 🎨 Layout Presets
 
 ### Explore Mode
+
 - Left panel visible (File tree)
 - Focused on navigation
 
 ### Inspect Mode  
+
 - Left and right panels visible
 - Deep dive into code structure
 
 ### Debug Mode
+
 - All panels visible
 - Full context for debugging
 
@@ -116,6 +123,7 @@ These features are defined in the UI_PLAN.md but not yet built:
 ### Adding a New Panel
 
 1. Register in `panel-manager.ts`:
+
 ```typescript
 panelManager.register({
   id: 'my-panel',
@@ -126,6 +134,7 @@ panelManager.register({
 ```
 
 2. Add to state in `panels.ts`:
+
 ```typescript
 'my-panel': {
   id: 'my-panel',
@@ -139,6 +148,7 @@ panelManager.register({
 ### Changing Theme
 
 Edit CSS variables in `panels.css`:
+
 ```css
 :root {
   --panel-bg: rgba(30, 30, 40, 0.95);

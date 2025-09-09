@@ -228,6 +228,11 @@ export class Graph3DVisualization {
         // Hot reload data
         this.graph.graphData(data);
     }
+    
+    public updateGraph(data: GraphData): void {
+        // Alias for updateData for consistency
+        this.updateData(data);
+    }
 
     public highlightPath(nodeIds: string[]): void {
         // Highlight a path through the graph

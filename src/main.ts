@@ -13,6 +13,9 @@ import { eventBus } from "./state/events";
 import "./ui/components/og-command-palette";
 import "./ui/components/og-menu-bar";
 import { AnalyzedGraph, UINodeMetricsV1, findMetricsForNode } from "./types/metrics";
+import { LodToolbar } from "./ui/LodToolbar";
+import { LodLevel } from "./lod/types";
+import { lodState } from "./lod/state";
 
 // Extend window interface for Tauri
 declare global {
@@ -96,6 +99,7 @@ async function initializeAPIs() {
 let graph3d: Graph3DVisualization | null = null;
 let panelManager: PanelManager | null = null;
 let splitterManager: SplitterManager | null = null;
+let lodToolbar: LodToolbar | null = null;
 let currentMetrics: UINodeMetricsV1[] = [];  // Store metrics globally
 
 // Initialize the app
@@ -145,6 +149,14 @@ async function initializeApp() {
         try {
             graph3d = new Graph3DVisualization("graph-container");
             console.log("✅ 3D Graph initialized");
+            
+            // Initialize LOD toolbar
+            lodToolbar = new LodToolbar((graphData) => {
+                if (graph3d) {
+                    graph3d.updateGraph(graphData);
+                }
+            });
+            console.log("✅ LOD Toolbar initialized");
         } catch (error) {
             console.error("❌ Failed to initialize 3D graph:", error);
         }
@@ -483,7 +495,26 @@ async function generateGraph() {
         console.log("📊 Received graph data:", graphData);
         
         if (graph3d && graphData) {
-            graph3d.loadData(graphData);
+            // Try to load LOD view at file level
+            try {
+                const lodData = await invoke("get_graph_at_lod", { lod: "l2Files" });
+                if (lodData && lodToolbar) {
+                    lodState.resetToGraph(lodData as any);
+                    const lodGraphData = lodState.toGraphData();
+                    graph3d.updateGraph(lodGraphData);
+                    lodToolbar.updateInfo(lodData.nodes.length, lodData.edges.length);
+                    console.log("✅ LOD view loaded at file level");
+                    console.log(`   LOD Nodes: ${lodData.nodes.length}`);
+                    console.log(`   LOD Edges: ${lodData.edges.length}`);
+                } else {
+                    // Fall back to regular graph if LOD not available
+                    graph3d.loadData(graphData);
+                }
+            } catch (lodError) {
+                console.log("ℹ️ LOD not available, using regular graph:", lodError);
+                // Fall back to regular graph
+                graph3d.loadData(graphData);
+            }
             
             // Update status
             if (status) status.textContent = `Graph generated: ${graphData.nodes.length} nodes, ${graphData.links.length} links`;

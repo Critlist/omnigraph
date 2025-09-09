@@ -2,6 +2,8 @@ use og_types::{
     AstNode, Language, NodeType, ParsedFile, Relationship, RelationshipType,
     EngineResult, EngineError, FileMetrics, ParseError,
 };
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use tree_sitter::{Node, Parser as TSParser, TreeCursor};
@@ -28,6 +30,13 @@ impl CParser {
         }
     }
 
+    fn generate_unique_id(file_path: &str, node_type: &str, counter: usize) -> String {
+        let mut hasher = DefaultHasher::new();
+        file_path.hash(&mut hasher);
+        let file_hash = hasher.finish();
+        format!("{}_{:x}_{}", node_type, file_hash, counter)
+    }
+
     fn extract_nodes(
         &self,
         cursor: &mut TreeCursor,
@@ -36,11 +45,12 @@ impl CParser {
     ) -> (Vec<AstNode>, Vec<Relationship>) {
         let mut nodes = Vec::new();
         let mut relationships = Vec::new();
+        
+        // Generate unique file ID based on file path
+        let file_id = Self::generate_unique_id(file_path, "file", 0);
+        println!("[C_PARSER] Parsing file: {} with ID: {}", file_path, file_id);
+        
         let mut node_counter = 0;
-
-        // Create file node
-        let file_id = format!("file_{}", node_counter);
-        node_counter += 1;
         
         nodes.push(AstNode {
             id: file_id.clone(),
@@ -85,7 +95,7 @@ impl CParser {
 
             match node_kind {
                 "preproc_include" => {
-                    if let Some((include_node, include_path)) = self.extract_include_with_path(node, source, file_path, node_counter) {
+                    if let Some((include_node, include_path)) = self.extract_include_with_path(node, source, file_path, node_counter, file_path) {
                         let include_id = include_node.id.clone();
                         
                         // Add include node
@@ -100,16 +110,20 @@ impl CParser {
                         
                         // Create import relationship to the actual file
                         if let Some(resolved_path) = self.resolve_include_path(&include_path, file_path) {
+                            println!("[C_PARSER] Creating import: {} -> {} (from include: {})", 
+                                     parent_id, resolved_path, include_path);
                             relationships.push(Relationship {
                                 source: parent_id.to_string(),
                                 target: resolved_path,
                                 relationship_type: RelationshipType::Imports,
                             });
+                        } else {
+                            println!("[C_PARSER] Could not resolve include path: {}", include_path);
                         }
                     }
                 }
                 "function_definition" => {
-                    if let Some(func_node) = self.extract_function(node, source, node_counter) {
+                    if let Some(func_node) = self.extract_function(node, source, node_counter, file_path) {
                         let func_id = func_node.id.clone();
                         let func_name = func_node.name.clone();
                         
@@ -149,7 +163,7 @@ impl CParser {
                     }
                 }
                 "struct_specifier" => {
-                    if let Some(struct_node) = self.extract_struct(node, source, node_counter) {
+                    if let Some(struct_node) = self.extract_struct(node, source, node_counter, file_path) {
                         let struct_id = struct_node.id.clone();
                         
                         // Add struct node
@@ -164,7 +178,7 @@ impl CParser {
                     }
                 }
                 "enum_specifier" => {
-                    if let Some(enum_node) = self.extract_enum(node, source, node_counter) {
+                    if let Some(enum_node) = self.extract_enum(node, source, node_counter, file_path) {
                         let enum_id = enum_node.id.clone();
                         
                         // Add enum node
@@ -208,7 +222,7 @@ impl CParser {
                 }
                 "preproc_def" => {
                     // Extract macro definitions
-                    if let Some(macro_node) = self.extract_macro_definition(node, source, node_counter) {
+                    if let Some(macro_node) = self.extract_macro_definition(node, source, node_counter, file_path) {
                         let macro_id = macro_node.id.clone();
                         nodes.push(macro_node);
                         relationships.push(Relationship {
@@ -220,7 +234,7 @@ impl CParser {
                 }
                 "type_definition" => {
                     // Extract typedef
-                    if let Some(typedef_node) = self.extract_typedef(node, source, node_counter) {
+                    if let Some(typedef_node) = self.extract_typedef(node, source, node_counter, file_path) {
                         let typedef_id = typedef_node.id.clone();
                         nodes.push(typedef_node);
                         relationships.push(Relationship {
@@ -257,19 +271,22 @@ impl CParser {
         &self,
         node: Node,
         source: &str,
-        _file_path: &str,
+        current_file: &str,
         node_counter: &mut usize,
+        file_path: &str,
     ) -> Option<(AstNode, String)> {
         // Find the path node
         let mut cursor = node.walk();
         let mut include_path = None;
+        let mut raw_include = None;
         
         if cursor.goto_first_child() {
             loop {
                 let child = cursor.node();
                 if child.kind() == "string_literal" || child.kind() == "system_lib_string" {
                     let text = child.utf8_text(source.as_bytes()).ok()?;
-                    // Remove quotes and angle brackets
+                    raw_include = Some(text.to_string());
+                    // Remove quotes and angle brackets for display
                     include_path = Some(text.trim_matches(|c| c == '"' || c == '<' || c == '>').to_string());
                     break;
                 }
@@ -280,14 +297,15 @@ impl CParser {
         }
         
         let path = include_path?;
+        let raw = raw_include?;
         
-        let id = format!("include_{}", node_counter);
+        let id = Self::generate_unique_id(file_path, "include", *node_counter);
         *node_counter += 1;
         
         let node = AstNode {
             id,
             node_type: NodeType::Import,
-            name: path.clone(),
+            name: format!("#include {}", raw),
             start_line: node.start_position().row + 1,
             end_line: node.end_position().row + 1,
             children: Vec::new(),
@@ -297,10 +315,41 @@ impl CParser {
     }
 
     fn resolve_include_path(&self, include_path: &str, current_file: &str) -> Option<String> {
-        // Convert include path to a file ID that matches the file nodes
-        // For now, just return the include path as-is
-        // In a real implementation, we'd resolve relative paths
-        Some(format!("file_{}", include_path.replace(".h", "_h").replace(".c", "_c")))
+        // Generate a file ID that matches how we create file IDs
+        // This should match the ID of the target file when it's parsed
+        
+        // For system includes like <stdio.h>, we might not have the actual file
+        // For local includes, we need to resolve to the actual file path
+        
+        // Try to resolve the include path to an actual file path
+        let current_dir = Path::new(current_file).parent()?;
+        
+        // Remove quotes or angle brackets from include path
+        let clean_path = include_path
+            .trim_start_matches('"')
+            .trim_end_matches('"')
+            .trim_start_matches('<')
+            .trim_end_matches('>');
+        
+        // Try to resolve relative to the current file's directory
+        let resolved_path = if clean_path.starts_with('/') {
+            // Absolute path
+            PathBuf::from(clean_path)
+        } else {
+            // Relative path - resolve relative to current file's directory
+            current_dir.join(clean_path)
+        };
+        
+        // Convert to a string path that matches how files are parsed
+        let path_str = resolved_path.to_str()?;
+        
+        // Generate the same ID that would be generated when this file is parsed
+        let file_id = Self::generate_unique_id(path_str, "file", 0);
+        
+        println!("[C_PARSER] Resolved include '{}' to path '{}' with ID '{}'", 
+                 include_path, path_str, file_id);
+        
+        Some(file_id)
     }
     
     fn extract_function_calls(&self, func_node: Node, source: &str) -> Vec<String> {
@@ -426,6 +475,7 @@ impl CParser {
         node: Node,
         source: &str,
         node_counter: &mut usize,
+        file_path: &str,
     ) -> Option<AstNode> {
         let mut cursor = node.walk();
         let mut macro_name = None;
@@ -445,7 +495,7 @@ impl CParser {
         
         let name = macro_name.unwrap_or_else(|| "MACRO".to_string());
         
-        let id = format!("macro_{}", node_counter);
+        let id = Self::generate_unique_id(file_path, "macro", *node_counter);
         *node_counter += 1;
         
         Some(AstNode {
@@ -463,6 +513,7 @@ impl CParser {
         node: Node,
         source: &str,
         node_counter: &mut usize,
+        file_path: &str,
     ) -> Option<AstNode> {
         let text = node.utf8_text(source.as_bytes()).ok()?;
         
@@ -470,7 +521,7 @@ impl CParser {
         let words: Vec<&str> = text.split_whitespace().collect();
         let name = words.last()?.trim_end_matches(';').to_string();
         
-        let id = format!("typedef_{}", node_counter);
+        let id = Self::generate_unique_id(file_path, "typedef", *node_counter);
         *node_counter += 1;
         
         Some(AstNode {
@@ -488,6 +539,7 @@ impl CParser {
         node: Node,
         source: &str,
         node_counter: &mut usize,
+        file_path: &str,
     ) -> Option<AstNode> {
         let mut cursor = node.walk();
         let mut function_name = None;
@@ -520,7 +572,7 @@ impl CParser {
         
         let name = function_name.unwrap_or_else(|| "anonymous".to_string());
         
-        let id = format!("function_{}", node_counter);
+        let id = Self::generate_unique_id(file_path, "function", *node_counter);
         *node_counter += 1;
         
         Some(AstNode {
@@ -538,6 +590,7 @@ impl CParser {
         node: Node,
         source: &str,
         node_counter: &mut usize,
+        file_path: &str,
     ) -> Option<AstNode> {
         let mut cursor = node.walk();
         let mut struct_name = None;
@@ -557,7 +610,7 @@ impl CParser {
         
         let name = struct_name.unwrap_or_else(|| "anonymous_struct".to_string());
         
-        let id = format!("struct_{}", node_counter);
+        let id = Self::generate_unique_id(file_path, "struct", *node_counter);
         *node_counter += 1;
         
         Some(AstNode {
@@ -575,6 +628,7 @@ impl CParser {
         node: Node,
         source: &str,
         node_counter: &mut usize,
+        file_path: &str,
     ) -> Option<AstNode> {
         let mut cursor = node.walk();
         let mut enum_name = None;
@@ -594,7 +648,7 @@ impl CParser {
         
         let name = enum_name.unwrap_or_else(|| "anonymous_enum".to_string());
         
-        let id = format!("enum_{}", node_counter);
+        let id = Self::generate_unique_id(file_path, "enum", *node_counter);
         *node_counter += 1;
         
         Some(AstNode {

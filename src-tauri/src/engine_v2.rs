@@ -100,17 +100,7 @@ impl Engine {
         progress: Option<Arc<dyn ProgressReporter>>,
     ) -> Result<AnalyzedGraph> {
         tracing::info!("[ENGINE] Starting analyze_with_metrics");
-        println!("[ENGINE] Starting analyze_with_metrics");
         
-        // Wrap everything in a catch to prevent silent crashes
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            println!("[ENGINE] Inside panic catch wrapper");
-        }));
-        
-        if let Err(e) = result {
-            println!("[ENGINE] CRITICAL: Panic in analyze_with_metrics setup: {:?}", e);
-            tracing::error!("[ENGINE] CRITICAL: Panic in analyze_with_metrics setup: {:?}", e);
-        }
         // Get basic graph (this will go to 70%)
         let graph_data = match self.analyze_codebase_internal(progress.clone(), true).await {
             Ok(data) => data,
@@ -261,7 +251,6 @@ impl Engine {
             reporter.report("Running analysis suite", 80.0);
         }
         
-        println!("[ENGINE] About to run analysis suite");
         tracing::info!("[ENGINE] About to run analysis suite");
         
         // Try to run analysis with comprehensive error handling
@@ -279,19 +268,15 @@ impl Engine {
             }
             
             // Try the analysis with timeout (simpler approach without spawning)
-            println!("[ENGINE] Creating analysis future...");
             let analysis_future = analyze_graph(&code_graph, Some(config));
             let timeout_duration = std::time::Duration::from_secs(30); // Increased timeout
-            println!("[ENGINE] Starting timeout wrapper for {} seconds...", timeout_duration.as_secs());
             
             // Update progress while waiting
             if let Some(ref reporter) = progress {
                 reporter.report("Computing metrics", 85.0);
             }
             
-            println!("[ENGINE] Awaiting timeout...");
             let timeout_result = tokio::time::timeout(timeout_duration, analysis_future).await;
-            println!("[ENGINE] Timeout completed, processing result...");
             
             // Report near completion
             if let Some(ref reporter) = progress {
@@ -300,17 +285,14 @@ impl Engine {
             
             match timeout_result {
                 Ok(Ok(result)) => {
-                    println!("[ENGINE] Analysis succeeded!");
                     tracing::info!("[ENGINE] Analysis succeeded");
                     Ok(result)
                 },
                 Ok(Err(e)) => {
-                    println!("[ENGINE] Analysis returned error: {}", e);
                     tracing::error!("[ENGINE] Analysis returned error: {}", e);
                     Err(e)
                 },
                 Err(_) => {
-                    println!("[ENGINE] Analysis timed out after 30 seconds");
                     tracing::error!("[ENGINE] Analysis timed out after 30 seconds");
                     Err(anyhow::anyhow!("Analysis timed out"))
                 }

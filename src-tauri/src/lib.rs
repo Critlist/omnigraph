@@ -1,6 +1,10 @@
 mod engine_v2;
+mod lod;
+mod graph_store;
 
 use engine_v2::{Engine, AnalyzedGraph, AnalysisSummary};
+use lod::{LodLevel, GraphPayload, GraphDelta};
+use graph_store::GraphStore;
 use og_graph::graph::GraphData;
 use og_utils::ProgressReporter;
 use serde::{Deserialize, Serialize};
@@ -333,6 +337,7 @@ struct AppState {
     engine: Option<Engine>,
     current_graph: Option<GraphData>,
     analyzed_graph: Option<AnalyzedGraph>,
+    lod_store: Arc<GraphStore>,
 }
 
 impl Default for AppState {
@@ -341,6 +346,7 @@ impl Default for AppState {
             engine: None,
             current_graph: None,
             analyzed_graph: None,
+            lod_store: Arc::new(GraphStore::new()),
         }
     }
 }
@@ -543,6 +549,48 @@ async fn reset_app(
     Ok(())
 }
 
+// LOD Commands
+
+#[tauri::command]
+async fn get_graph_at_lod(
+    lod: LodLevel,
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<GraphPayload, String> {
+    
+    let state_guard = state.lock().unwrap();
+    
+    // If we have a current graph, convert it to snapshot and load it
+    if let Some(graph_data) = &state_guard.current_graph {
+        let snapshot = lod::GraphSnapshot::from_parsed_graph(graph_data);
+        state_guard.lod_store.load_snapshot(snapshot)
+            .map_err(|e| e.to_string())?;
+    }
+    
+    Ok(state_guard.lod_store.get_graph_at_lod(lod))
+}
+
+#[tauri::command]
+async fn expand_node(
+    node_id: String,
+    target_lod: LodLevel,
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<GraphDelta, String> {
+    
+    let state_guard = state.lock().unwrap();
+    Ok(state_guard.lod_store.expand_node(node_id, target_lod))
+}
+
+#[tauri::command]
+async fn collapse_node(
+    node_id: String,
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<GraphDelta, String> {
+    println!("Collapsing node: {}", node_id);
+    
+    let state_guard = state.lock().unwrap();
+    Ok(state_guard.lod_store.collapse_node(node_id))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -555,7 +603,10 @@ pub fn run() {
             generate_graph,
             analyze_with_metrics,
             get_saved_graph,
-            reset_app
+            reset_app,
+            get_graph_at_lod,
+            expand_node,
+            collapse_node
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

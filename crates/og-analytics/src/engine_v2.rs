@@ -145,12 +145,14 @@ impl AnalyticsEngineV2 {
         // Run each metric module with timeout and error recovery
         if self.config.parallel_metrics {
             // Run metrics in parallel with isolated error handling
-            let (centrality, community, risk, quality) = tokio::join!(
+            // Community detection commented out for performance during debugging
+            let (centrality, /*community,*/ risk, quality) = tokio::join!(
                 self.run_centrality_with_timeout(graph),
-                self.run_community_with_timeout(graph),
+                // self.run_community_with_timeout(graph),
                 self.run_risk_with_timeout(graph),
                 self.run_quality_with_timeout(graph),
             );
+            let community: Result<CommunityResults> = Ok(CommunityResults::default());
 
             report.centrality = centrality.unwrap_or_else(|e| {
                 error!("Centrality metrics failed: {}", e);
@@ -184,12 +186,14 @@ impl AnalyticsEngineV2 {
                     CentralityResults::default()
                 });
 
-            report.community = self.run_community_with_timeout(graph).await
-                .unwrap_or_else(|e| {
-                    error!("Community detection failed: {}", e);
-                    report.errors.push(format!("Community: {}", e));
-                    CommunityResults::default()
-                });
+            // Community detection commented out for performance during debugging
+            // report.community = self.run_community_with_timeout(graph).await
+            //     .unwrap_or_else(|e| {
+            //         error!("Community detection failed: {}", e);
+            //         report.errors.push(format!("Community: {}", e));
+            //         CommunityResults::default()
+            //     });
+            report.community = CommunityResults::default();
 
             report.risk = self.run_risk_with_timeout(graph).await
                 .unwrap_or_else(|e| {
@@ -226,7 +230,8 @@ impl AnalyticsEngineV2 {
         .map_err(|e| anyhow::anyhow!("Task join error: {}", e))?
     }
 
-    /// Run community detection with timeout
+    /// Run community detection with timeout - commented out for performance during debugging
+    #[allow(dead_code)]
     async fn run_community_with_timeout(&self, graph: &CodeGraph) -> Result<CommunityResults> {
         let graph = graph.clone();
         let detector = Arc::clone(&self.community_detector);

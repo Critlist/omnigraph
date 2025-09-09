@@ -1,7 +1,7 @@
 use crate::analysis::AnalysisReport;
 use crate::metrics::{
     centrality::CentralityMetrics,
-    community::CommunityDetection,
+    // community::CommunityDetection,  // Commented out for performance during debugging
     quality::QualityMetrics,
     risk::RiskAnalysis,
     Metric, MetricResults, MetricValue,
@@ -116,10 +116,10 @@ impl AnalyticsEngine {
         self.add_metric(Box::new(QualityMetrics::new()));
         // Risk analysis
         self.add_metric(Box::new(RiskAnalysis::new()));
-        // Community detection
-        self.add_metric(Box::new(CommunityDetection::new(
-            self.config.louvain_resolution,
-        )));
+        // Community detection - commented out for performance during debugging
+        // self.add_metric(Box::new(CommunityDetection::new(
+        //     self.config.louvain_resolution,
+        // )));
     }
 
     /// Add a metric to the engine
@@ -261,27 +261,20 @@ impl AnalyticsEngine {
         println!("[ENGINE-ANALYTICS] Starting sequential metrics execution");
         
         let mut results = Vec::new();
-        for (idx, metric) in self.metrics.iter().enumerate() {
+        for (_idx, metric) in self.metrics.iter().enumerate() {
             let name = metric.name();
-            println!("[ENGINE-ANALYTICS] Running metric {} of {}: {}", idx + 1, self.metrics.len(), name);
             debug!("Running metric: {}", name);
             
             // Catch panics and convert to errors
-            println!("[ENGINE-ANALYTICS] About to calculate metric: {}", name);
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                println!("[ENGINE-ANALYTICS] Inside panic catch for metric: {}", name);
                 metric.calculate(graph)
             }));
-            
-            println!("[ENGINE-ANALYTICS] Metric {} calculation returned", name);
             match result {
                 Ok(Ok(metric_result)) => {
-                    println!("[ENGINE-ANALYTICS] Metric {} completed successfully", name);
                     debug!("Metric {} completed successfully", name);
                     results.push(metric_result);
                 },
                 Ok(Err(e)) => {
-                    println!("[ENGINE-ANALYTICS] Metric {} failed with error: {}", name, e);
                     error!("Metric {} failed: {}", name, e);
                     results.push(MetricResults::new(name.to_string()));
                 },
