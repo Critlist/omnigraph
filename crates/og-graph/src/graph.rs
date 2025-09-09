@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Code graph representation using petgraph
+#[derive(Clone)]
 pub struct CodeGraph {
     pub graph: DiGraph<GraphNode, GraphEdge>,
     pub node_map: HashMap<String, NodeIndex>,

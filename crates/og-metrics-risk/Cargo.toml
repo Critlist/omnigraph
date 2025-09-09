@@ -1,0 +1,15 @@
+[package]
+name = "og-metrics-risk"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+petgraph = "0.6"
+rayon = "1.10"
+tracing = "0.1"
+og-graph = { path = "../og-graph" }
+og-types = { path = "../og-types" }
+
+[dev-dependencies]
+tokio = { version = "1.41", features = ["full"] }

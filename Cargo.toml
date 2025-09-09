@@ -6,6 +6,10 @@ members = [
     "crates/og-graph", 
     "crates/og-db",
     "crates/og-analytics",
+    "crates/og-metrics-centrality",
+    "crates/og-metrics-community",
+    "crates/og-metrics-risk",
+    "crates/og-metrics-quality",
     "crates/og-services",
     "crates/og-utils"
 ]
