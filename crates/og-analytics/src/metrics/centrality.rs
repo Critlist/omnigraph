@@ -56,6 +56,7 @@ impl CentralityMetrics {
     /// Calculate betweenness centrality
     fn calculate_betweenness(&self, graph: &CodeGraph) -> HashMap<String, f64> {
         debug!("Calculating betweenness centrality");
+        println!("[CENTRALITY] Betweenness: node_count = {}", graph.graph.node_count());
         
         let mut betweenness = HashMap::new();
         let node_count = graph.graph.node_count();
@@ -77,20 +78,50 @@ impl CentralityMetrics {
             }
         }
         
-        // Simple betweenness centrality calculation
-        // For each pair of nodes, find shortest paths and count
-        for source in graph.graph.node_indices() {
-            let paths = petgraph::algo::dijkstra(&graph.graph, source, None, |_| 1.0);
+        // For large graphs, use sampling to avoid O(n³) complexity
+        const MAX_FULL_CALC_NODES: usize = 100;
+        const SAMPLE_SIZE: usize = 50;
+        
+        if node_count > MAX_FULL_CALC_NODES {
+            println!("[CENTRALITY] Large graph detected ({} nodes), using sampling approach", node_count);
             
-            for target in graph.graph.node_indices() {
-                if source != target {
-                    // Count paths through intermediate nodes
-                    for intermediate in graph.graph.node_indices() {
-                        if intermediate != source && intermediate != target {
-                            // Simplified: increment if on a path
-                            if paths.contains_key(&intermediate) && paths.contains_key(&target) {
-                                if let Some(node) = graph.graph.node_weight(intermediate) {
-                                    *betweenness.entry(node.id.clone()).or_insert(0.0) += 1.0;
+            // Sample a subset of source nodes for approximation
+            let node_indices: Vec<_> = graph.graph.node_indices().collect();
+            let sample_size = SAMPLE_SIZE.min(node_count);
+            let step = node_count / sample_size;
+            
+            for (i, &source) in node_indices.iter().step_by(step.max(1)).enumerate() {
+                if i >= sample_size {
+                    break;
+                }
+                
+                // Use petgraph's built-in betweenness calculation for this source
+                let paths = petgraph::algo::dijkstra(&graph.graph, source, None, |_| 1.0);
+                
+                // Just count nodes on shortest paths (simplified)
+                for (node_idx, _) in paths.iter() {
+                    if let Some(node) = graph.graph.node_weight(*node_idx) {
+                        *betweenness.entry(node.id.clone()).or_insert(0.0) += 1.0;
+                    }
+                }
+            }
+        } else {
+            println!("[CENTRALITY] Small graph ({} nodes), using full calculation", node_count);
+            
+            // Original O(n³) algorithm for small graphs
+            for source in graph.graph.node_indices() {
+                let paths = petgraph::algo::dijkstra(&graph.graph, source, None, |_| 1.0);
+                
+                for target in graph.graph.node_indices() {
+                    if source != target {
+                        // Count paths through intermediate nodes
+                        for intermediate in graph.graph.node_indices() {
+                            if intermediate != source && intermediate != target {
+                                // Simplified: increment if on a path
+                                if paths.contains_key(&intermediate) && paths.contains_key(&target) {
+                                    if let Some(node) = graph.graph.node_weight(intermediate) {
+                                        *betweenness.entry(node.id.clone()).or_insert(0.0) += 1.0;
+                                    }
                                 }
                             }
                         }
@@ -182,7 +213,7 @@ impl CentralityMetrics {
     }
 
     /// Calculate eigenvector centrality
-    fn calculate_eigenvector(&self, graph: &CodeGraph) -> HashMap<String, f64> {
+    fn calculate_eigenvector_centrality(&self, graph: &CodeGraph) -> HashMap<String, f64> {
         debug!("Calculating eigenvector centrality");
         
         let node_count = graph.graph.node_count();
@@ -407,14 +438,21 @@ impl CentralityMetrics {
 
 impl Metric for CentralityMetrics {
     fn calculate(&self, graph: &CodeGraph) -> Result<MetricResults> {
+        println!("[CENTRALITY] Starting centrality metrics calculation");
         let mut results = MetricResults::new("centrality".to_string());
 
         // Calculate all centrality metrics
+        println!("[CENTRALITY] Calculating degree centrality...");
         let degree_centrality = self.calculate_degree(graph);
+        println!("[CENTRALITY] Degree centrality done. Calculating betweenness...");
         let betweenness = self.calculate_betweenness(graph);
+        println!("[CENTRALITY] Betweenness done. Calculating closeness...");
         let closeness = self.calculate_closeness(graph);
+        println!("[CENTRALITY] Closeness done. Calculating k-core...");
         let k_core = self.calculate_k_core(graph);
+        println!("[CENTRALITY] K-core done. Calculating clustering...");
         let clustering = self.calculate_clustering(graph);
+        println!("[CENTRALITY] Clustering done.");
 
         // Store degree centrality
         for (node_id, (in_degree, out_degree)) in degree_centrality {
@@ -469,7 +507,7 @@ impl Metric for CentralityMetrics {
 
         // Calculate eigenvector if enabled
         if self.calculate_eigenvector {
-            let eigenvector = self.calculate_eigenvector(graph);
+            let eigenvector = self.calculate_eigenvector_centrality(graph);
             results.add_value("eigenvector_map".to_string(), MetricValue::Map(eigenvector.clone()));
             for (node_id, value) in eigenvector {
                 results.add_value(

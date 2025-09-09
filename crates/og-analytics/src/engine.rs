@@ -258,23 +258,30 @@ impl AnalyticsEngine {
     /// Run metrics sequentially with error recovery
     async fn run_metrics_sequential_safe(&self, graph: &CodeGraph) -> Result<Vec<MetricResults>> {
         debug!("Running metrics sequentially with error recovery");
+        println!("[ENGINE-ANALYTICS] Starting sequential metrics execution");
         
         let mut results = Vec::new();
-        for metric in &self.metrics {
+        for (idx, metric) in self.metrics.iter().enumerate() {
             let name = metric.name();
+            println!("[ENGINE-ANALYTICS] Running metric {} of {}: {}", idx + 1, self.metrics.len(), name);
             debug!("Running metric: {}", name);
             
             // Catch panics and convert to errors
+            println!("[ENGINE-ANALYTICS] About to calculate metric: {}", name);
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                println!("[ENGINE-ANALYTICS] Inside panic catch for metric: {}", name);
                 metric.calculate(graph)
             }));
             
+            println!("[ENGINE-ANALYTICS] Metric {} calculation returned", name);
             match result {
                 Ok(Ok(metric_result)) => {
+                    println!("[ENGINE-ANALYTICS] Metric {} completed successfully", name);
                     debug!("Metric {} completed successfully", name);
                     results.push(metric_result);
                 },
                 Ok(Err(e)) => {
+                    println!("[ENGINE-ANALYTICS] Metric {} failed with error: {}", name, e);
                     error!("Metric {} failed: {}", name, e);
                     results.push(MetricResults::new(name.to_string()));
                 },
@@ -286,12 +293,14 @@ impl AnalyticsEngine {
                     } else {
                         "Unknown panic".to_string()
                     };
+                    println!("[ENGINE-ANALYTICS] Metric {} panicked: {}", name, msg);
                     error!("Metric {} panicked: {}", name, msg);
                     results.push(MetricResults::new(name.to_string()));
                 }
             }
         }
 
+        println!("[ENGINE-ANALYTICS] All metrics completed");
         Ok(results)
     }
 

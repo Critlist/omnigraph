@@ -324,10 +324,13 @@ struct RiskScore {
 
 impl Metric for RiskAnalysis {
     fn calculate(&self, graph: &CodeGraph) -> Result<MetricResults> {
+        println!("[RISK] Starting risk analysis");
         let mut results = MetricResults::new("risk".to_string());
 
         // Calculate risk scores
+        println!("[RISK] Identifying high-risk nodes...");
         let risk_scores = self.identify_high_risk_nodes(graph);
+        println!("[RISK] Found {} high-risk nodes", risk_scores.len());
         for (node_id, scores) in risk_scores {
             results.add_value(
                 format!("{}_risk", node_id),
@@ -348,7 +351,9 @@ impl Metric for RiskAnalysis {
         }
 
         // Find chokepoints
+        println!("[RISK] Finding chokepoints...");
         let chokepoints = self.find_chokepoints(graph);
+        println!("[RISK] Found {} chokepoints", chokepoints.len());
         for (node_id, score) in chokepoints {
             results.add_value(
                 format!("{}_chokepoint", node_id),
@@ -357,7 +362,9 @@ impl Metric for RiskAnalysis {
         }
 
         // Detect circular dependencies
+        println!("[RISK] Detecting circular dependencies...");
         let circular_deps = self.detect_circular_dependencies(graph);
+        println!("[RISK] Found {} circular dependencies", circular_deps.len());
         results.add_value(
             "circular_dependencies".to_string(),
             MetricValue::Integer(circular_deps.len() as i64),
@@ -377,7 +384,9 @@ impl Metric for RiskAnalysis {
         }
 
         // Calculate technical debt
+        println!("[RISK] Calculating technical debt...");
         let debt_scores = self.calculate_technical_debt(graph);
+        println!("[RISK] Calculated debt for {} nodes", debt_scores.len());
         for (node_id, score) in debt_scores {
             results.add_value(
                 format!("{}_technical_debt", node_id),
@@ -386,7 +395,9 @@ impl Metric for RiskAnalysis {
         }
 
         // Calculate change propagation
+        println!("[RISK] Calculating change propagation...");
         let propagation = self.calculate_change_propagation(graph);
+        println!("[RISK] Calculated propagation for {} nodes", propagation.len());
         for (node_id, score) in propagation {
             results.add_value(
                 format!("{}_change_propagation", node_id),
@@ -394,6 +405,7 @@ impl Metric for RiskAnalysis {
             );
         }
 
+        println!("[RISK] Risk analysis complete");
         Ok(results)
     }
 

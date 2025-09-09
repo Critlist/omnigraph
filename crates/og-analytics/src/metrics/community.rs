@@ -58,12 +58,19 @@ impl CommunityDetection {
         let mut improvement = true;
         let mut iteration = 0;
 
+        println!("[LOUVAIN] Starting iterations (max_iterations = {})", self.max_iterations);
         while improvement && iteration < self.max_iterations {
             improvement = false;
             iteration += 1;
+            println!("[LOUVAIN] Iteration {} of {}", iteration, self.max_iterations);
 
             // Phase 1: Local optimization
-            for node_idx in graph.graph.node_indices() {
+            let node_count = graph.graph.node_count();
+            println!("[LOUVAIN] Processing {} nodes in iteration {}", node_count, iteration);
+            for (idx, node_idx) in graph.graph.node_indices().enumerate() {
+                if idx % 100 == 0 {
+                    println!("[LOUVAIN] Processing node {} of {}", idx, node_count);
+                }
                 let current_community = communities[&node_idx];
                 let mut best_community = current_community;
                 let mut best_gain = 0.0;
@@ -117,6 +124,7 @@ impl CommunityDetection {
             }
         }
 
+        println!("[LOUVAIN] Completed after {} iterations", iteration);
         debug!("Louvain completed after {} iterations", iteration);
         self.node_indices_to_string_map(graph, &communities)
     }
@@ -406,12 +414,16 @@ impl CommunityDetection {
 
 impl Metric for CommunityDetection {
     fn calculate(&self, graph: &CodeGraph) -> Result<MetricResults> {
+        println!("[COMMUNITY] Starting community detection");
         let mut results = MetricResults::new("community".to_string());
 
         // Run Louvain algorithm
+        println!("[COMMUNITY] Running Louvain algorithm on {} nodes...", graph.graph.node_count());
         let communities = self.louvain(graph);
+        println!("[COMMUNITY] Louvain complete, found {} community assignments", communities.len());
 
         // Store community assignments
+        println!("[COMMUNITY] Storing community assignments...");
         for (node_id, community) in &communities {
             results.add_value(
                 format!("{}_community", node_id),
@@ -420,17 +432,22 @@ impl Metric for CommunityDetection {
         }
 
         // Calculate modularity
+        println!("[COMMUNITY] Calculating modularity...");
         let modularity = self.calculate_modularity(graph, &communities);
+        println!("[COMMUNITY] Modularity = {}", modularity);
         results.add_value("modularity".to_string(), MetricValue::Float(modularity));
 
         // Identify clusters
+        println!("[COMMUNITY] Identifying clusters...");
         let clusters = self.identify_clusters(&communities);
+        println!("[COMMUNITY] Found {} clusters", clusters.len());
         results.add_value(
             "num_communities".to_string(),
             MetricValue::Integer(clusters.len() as i64),
         );
 
         // Store cluster sizes
+        println!("[COMMUNITY] Storing cluster sizes...");
         for (i, cluster) in clusters.iter().enumerate() {
             results.add_value(
                 format!("community_{}_size", i),
@@ -439,7 +456,9 @@ impl Metric for CommunityDetection {
         }
 
         // Find refactoring boundaries
+        println!("[COMMUNITY] Finding refactoring boundaries...");
         let boundaries = self.find_refactoring_boundaries(graph, &communities);
+        println!("[COMMUNITY] Found {} boundaries", boundaries.len());
         for (node_id, score) in boundaries {
             results.add_value(
                 format!("{}_boundary_score", node_id),
@@ -447,6 +466,7 @@ impl Metric for CommunityDetection {
             );
         }
 
+        println!("[COMMUNITY] Community detection complete");
         Ok(results)
     }
 
