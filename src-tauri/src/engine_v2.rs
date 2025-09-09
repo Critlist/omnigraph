@@ -273,15 +273,30 @@ impl Engine {
             tracing::info!("Attempting analysis with config: parallel={}, use_cache={}", 
                          config.parallel, config.use_cache);
             
+            // Report progress during analysis
+            if let Some(ref reporter) = progress {
+                reporter.report("Analyzing graph structure", 82.0);
+            }
+            
             // Try the analysis with timeout (simpler approach without spawning)
             println!("[ENGINE] Creating analysis future...");
             let analysis_future = analyze_graph(&code_graph, Some(config));
             let timeout_duration = std::time::Duration::from_secs(30); // Increased timeout
             println!("[ENGINE] Starting timeout wrapper for {} seconds...", timeout_duration.as_secs());
             
+            // Update progress while waiting
+            if let Some(ref reporter) = progress {
+                reporter.report("Computing metrics", 85.0);
+            }
+            
             println!("[ENGINE] Awaiting timeout...");
             let timeout_result = tokio::time::timeout(timeout_duration, analysis_future).await;
             println!("[ENGINE] Timeout completed, processing result...");
+            
+            // Report near completion
+            if let Some(ref reporter) = progress {
+                reporter.report("Finalizing analysis", 88.0);
+            }
             
             match timeout_result {
                 Ok(Ok(result)) => {

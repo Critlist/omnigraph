@@ -168,7 +168,7 @@ impl AnalyticsEngine {
         println!("[ENGINE-ANALYTICS] Starting analysis with {} nodes", graph.node_map.len());
         info!("Starting graph analysis with {} nodes", graph.node_map.len());
 
-        // Validate graph
+        // Validate graph (82%)
         println!("[ENGINE-ANALYTICS] Validating graph...");
         self.validate_graph(graph)?;
         println!("[ENGINE-ANALYTICS] Graph validation passed");
@@ -178,7 +178,7 @@ impl AnalyticsEngine {
             self.metrics_cache.clear();
         }
 
-        // Run all metrics with error recovery
+        // Run all metrics with error recovery (83-88%)
         println!("[ENGINE-ANALYTICS] Running metrics (parallel={})", self.config.parallel);
         let results = if self.config.parallel {
             println!("[ENGINE-ANALYTICS] Running parallel metrics...");
@@ -189,7 +189,7 @@ impl AnalyticsEngine {
         };
         println!("[ENGINE-ANALYTICS] Metrics completed, got {} results", results.len());
 
-        // Build analysis report
+        // Build analysis report (89%)
         println!("[ENGINE-ANALYTICS] Building analysis report...");
         let report = AnalysisReport::new(
             results,

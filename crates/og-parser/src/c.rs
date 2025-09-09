@@ -85,7 +85,7 @@ impl CParser {
 
             match node_kind {
                 "preproc_include" => {
-                    if let Some(include_node) = self.extract_include(node, source, file_path, node_counter) {
+                    if let Some((include_node, include_path)) = self.extract_include_with_path(node, source, file_path, node_counter) {
                         let include_id = include_node.id.clone();
                         
                         // Add include node
@@ -97,11 +97,21 @@ impl CParser {
                             target: include_id.clone(),
                             relationship_type: RelationshipType::Contains,
                         });
+                        
+                        // Create import relationship to the actual file
+                        if let Some(resolved_path) = self.resolve_include_path(&include_path, file_path) {
+                            relationships.push(Relationship {
+                                source: parent_id.to_string(),
+                                target: resolved_path,
+                                relationship_type: RelationshipType::Imports,
+                            });
+                        }
                     }
                 }
                 "function_definition" => {
                     if let Some(func_node) = self.extract_function(node, source, node_counter) {
                         let func_id = func_node.id.clone();
+                        let func_name = func_node.name.clone();
                         
                         // Add function node
                         nodes.push(func_node);
@@ -112,6 +122,16 @@ impl CParser {
                             target: func_id.clone(),
                             relationship_type: RelationshipType::Contains,
                         });
+                        
+                        // Extract function calls from the body
+                        let calls = self.extract_function_calls(node, source);
+                        for called_func in calls {
+                            relationships.push(Relationship {
+                                source: func_id.clone(),
+                                target: format!("function_{}", called_func),
+                                relationship_type: RelationshipType::Calls,
+                            });
+                        }
                         
                         // Recursively process function body
                         if cursor.goto_first_child() {
@@ -159,8 +179,20 @@ impl CParser {
                     }
                 }
                 "declaration" => {
+                    // Check for function declarations (prototypes)
+                    if self.is_function_declaration(node, source) {
+                        if let Some(decl_node) = self.extract_function_declaration(node, source, node_counter) {
+                            let decl_id = decl_node.id.clone();
+                            nodes.push(decl_node);
+                            relationships.push(Relationship {
+                                source: parent_id.to_string(),
+                                target: decl_id.clone(),
+                                relationship_type: RelationshipType::Contains,
+                            });
+                        }
+                    }
                     // Check for global variables
-                    if let Some(var_node) = self.extract_global_variable(node, source, node_counter) {
+                    else if let Some(var_node) = self.extract_global_variable(node, source, node_counter) {
                         let var_id = var_node.id.clone();
                         
                         // Add variable node
@@ -170,6 +202,30 @@ impl CParser {
                         relationships.push(Relationship {
                             source: parent_id.to_string(),
                             target: var_id.clone(),
+                            relationship_type: RelationshipType::Contains,
+                        });
+                    }
+                }
+                "preproc_def" => {
+                    // Extract macro definitions
+                    if let Some(macro_node) = self.extract_macro_definition(node, source, node_counter) {
+                        let macro_id = macro_node.id.clone();
+                        nodes.push(macro_node);
+                        relationships.push(Relationship {
+                            source: parent_id.to_string(),
+                            target: macro_id.clone(),
+                            relationship_type: RelationshipType::Contains,
+                        });
+                    }
+                }
+                "type_definition" => {
+                    // Extract typedef
+                    if let Some(typedef_node) = self.extract_typedef(node, source, node_counter) {
+                        let typedef_id = typedef_node.id.clone();
+                        nodes.push(typedef_node);
+                        relationships.push(Relationship {
+                            source: parent_id.to_string(),
+                            target: typedef_id.clone(),
                             relationship_type: RelationshipType::Contains,
                         });
                     }
@@ -197,13 +253,13 @@ impl CParser {
         }
     }
 
-    fn extract_include(
+    fn extract_include_with_path(
         &self,
         node: Node,
         source: &str,
         _file_path: &str,
         node_counter: &mut usize,
-    ) -> Option<AstNode> {
+    ) -> Option<(AstNode, String)> {
         // Find the path node
         let mut cursor = node.walk();
         let mut include_path = None;
@@ -228,10 +284,199 @@ impl CParser {
         let id = format!("include_{}", node_counter);
         *node_counter += 1;
         
-        Some(AstNode {
+        let node = AstNode {
             id,
             node_type: NodeType::Import,
             name: path.clone(),
+            start_line: node.start_position().row + 1,
+            end_line: node.end_position().row + 1,
+            children: Vec::new(),
+        };
+        
+        Some((node, path))
+    }
+
+    fn resolve_include_path(&self, include_path: &str, current_file: &str) -> Option<String> {
+        // Convert include path to a file ID that matches the file nodes
+        // For now, just return the include path as-is
+        // In a real implementation, we'd resolve relative paths
+        Some(format!("file_{}", include_path.replace(".h", "_h").replace(".c", "_c")))
+    }
+    
+    fn extract_function_calls(&self, func_node: Node, source: &str) -> Vec<String> {
+        let mut calls = Vec::new();
+        let mut cursor = func_node.walk();
+        
+        self.find_calls_recursive(&mut cursor, source, &mut calls);
+        calls
+    }
+    
+    fn find_calls_recursive(&self, cursor: &mut TreeCursor, source: &str, calls: &mut Vec<String>) {
+        loop {
+            let node = cursor.node();
+            
+            if node.kind() == "call_expression" {
+                // Extract the function name being called
+                if let Some(name) = self.extract_call_name(node, source) {
+                    if !calls.contains(&name) {
+                        calls.push(name);
+                    }
+                }
+            }
+            
+            // Recurse into children
+            if cursor.goto_first_child() {
+                self.find_calls_recursive(cursor, source, calls);
+                cursor.goto_parent();
+            }
+            
+            if !cursor.goto_next_sibling() {
+                break;
+            }
+        }
+    }
+    
+    fn extract_call_name(&self, node: Node, source: &str) -> Option<String> {
+        let mut cursor = node.walk();
+        
+        if cursor.goto_first_child() {
+            loop {
+                let child = cursor.node();
+                if child.kind() == "identifier" {
+                    return child.utf8_text(source.as_bytes()).ok().map(|s| s.to_string());
+                }
+                if !cursor.goto_next_sibling() {
+                    break;
+                }
+            }
+        }
+        None
+    }
+    
+    fn is_function_declaration(&self, node: Node, source: &str) -> bool {
+        // Check if this declaration contains a function declarator
+        let mut cursor = node.walk();
+        
+        if cursor.goto_first_child() {
+            loop {
+                let child = cursor.node();
+                if child.kind() == "function_declarator" {
+                    return true;
+                }
+                if !cursor.goto_next_sibling() {
+                    break;
+                }
+            }
+        }
+        false
+    }
+    
+    fn extract_function_declaration(
+        &self,
+        node: Node,
+        source: &str,
+        node_counter: &mut usize,
+    ) -> Option<AstNode> {
+        let mut cursor = node.walk();
+        let mut function_name = None;
+        
+        if cursor.goto_first_child() {
+            loop {
+                let child = cursor.node();
+                if child.kind() == "function_declarator" {
+                    // Get the identifier from the declarator
+                    let mut decl_cursor = child.walk();
+                    if decl_cursor.goto_first_child() {
+                        loop {
+                            let decl_child = decl_cursor.node();
+                            if decl_child.kind() == "identifier" {
+                                function_name = decl_child.utf8_text(source.as_bytes()).ok().map(|s| s.to_string());
+                                break;
+                            }
+                            if !decl_cursor.goto_next_sibling() {
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+                if !cursor.goto_next_sibling() {
+                    break;
+                }
+            }
+        }
+        
+        let name = function_name?;
+        
+        let id = format!("func_decl_{}", node_counter);
+        *node_counter += 1;
+        
+        Some(AstNode {
+            id,
+            node_type: NodeType::Function,
+            name: format!("{} (declaration)", name),
+            start_line: node.start_position().row + 1,
+            end_line: node.end_position().row + 1,
+            children: Vec::new(),
+        })
+    }
+    
+    fn extract_macro_definition(
+        &self,
+        node: Node,
+        source: &str,
+        node_counter: &mut usize,
+    ) -> Option<AstNode> {
+        let mut cursor = node.walk();
+        let mut macro_name = None;
+        
+        if cursor.goto_first_child() {
+            loop {
+                let child = cursor.node();
+                if child.kind() == "identifier" {
+                    macro_name = child.utf8_text(source.as_bytes()).ok().map(|s| s.to_string());
+                    break;
+                }
+                if !cursor.goto_next_sibling() {
+                    break;
+                }
+            }
+        }
+        
+        let name = macro_name.unwrap_or_else(|| "MACRO".to_string());
+        
+        let id = format!("macro_{}", node_counter);
+        *node_counter += 1;
+        
+        Some(AstNode {
+            id,
+            node_type: NodeType::Variable, // Using Variable for macros
+            name: format!("#define {}", name),
+            start_line: node.start_position().row + 1,
+            end_line: node.end_position().row + 1,
+            children: Vec::new(),
+        })
+    }
+    
+    fn extract_typedef(
+        &self,
+        node: Node,
+        source: &str,
+        node_counter: &mut usize,
+    ) -> Option<AstNode> {
+        let text = node.utf8_text(source.as_bytes()).ok()?;
+        
+        // Simple extraction - get the last identifier as the typedef name
+        let words: Vec<&str> = text.split_whitespace().collect();
+        let name = words.last()?.trim_end_matches(';').to_string();
+        
+        let id = format!("typedef_{}", node_counter);
+        *node_counter += 1;
+        
+        Some(AstNode {
+            id,
+            node_type: NodeType::Class, // Using Class for typedefs
+            name: format!("typedef {}", name),
             start_line: node.start_position().row + 1,
             end_line: node.end_position().row + 1,
             children: Vec::new(),
