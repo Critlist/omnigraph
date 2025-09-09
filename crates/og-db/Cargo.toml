@@ -1,0 +1,13 @@
+[package]
+name = "og-db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+og-types = { path = "../og-types" }
+neo4rs = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }

@@ -1,0 +1,15 @@
+{
+  "rust-analyzer.linkedProjects": [
+    "./Cargo.toml"
+  ],
+  "rust-analyzer.cargo.target": null,
+  "rust-analyzer.check.command": "check",
+  "rust-analyzer.diagnostics.enable": true,
+  "rust-analyzer.inlayHints.enable": true,
+  "rust-analyzer.procMacro.enable": true,
+  "rust-analyzer.cargo.features": "all",
+  "rust-analyzer.server.extraEnv": {
+    "RUSTUP_TOOLCHAIN": "stable-x86_64-unknown-linux-gnu"
+  },
+  "rust-analyzer.checkOnSave": false
+}

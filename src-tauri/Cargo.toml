@@ -1,0 +1,60 @@
+[package]
+name = "omnigraph-tauri"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "omnigraph_tauri_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Workspace crates
+og-types = { path = "../crates/og-types" }
+og-parser = { path = "../crates/og-parser" }
+og-graph = { path = "../crates/og-graph" }
+og-analytics = { path = "../crates/og-analytics" }
+og-db = { path = "../crates/og-db" }
+og-services = { path = "../crates/og-services" }
+og-utils = { path = "../crates/og-utils" }
+
+# Tauri
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+
+# Core dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Parsing (still needed for legacy code during migration)
+tree-sitter = { workspace = true }
+tree-sitter-javascript = { workspace = true }
+tree-sitter-typescript = { workspace = true }
+tree-sitter-python = { workspace = true }
+
+# Graph & Analytics
+petgraph = "0.6"
+rayon = { workspace = true }
+
+# Neo4j
+neo4rs = { workspace = true }
+
+# File system
+walkdir = "2.4"
+ignore = "0.4"
+

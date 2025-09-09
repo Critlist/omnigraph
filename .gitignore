@@ -16,6 +16,12 @@ src-tauri/target/
 src-tauri/WixTools/
 src-tauri/Cargo.lock
 
+# Rust/Cargo
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
 # IDE
 .vscode/*
 !.vscode/extensions.json
@@ -27,12 +33,11 @@ src-tauri/Cargo.lock
 *.swo
 *~
 .fleet/
-CLAUDE.md
 # System
 .DS_Store
 Thumbs.db
 desktop.ini
-
+CLAUDE.md
 # Environment
 .env
 .env.local
@@ -63,9 +68,14 @@ temp/
 *.pdb
 debug/
 
-# Rust
-**/*.rs.bk
-*.pdb
+# Archive files
+*.tar.gz
+*.zip
+*.tar
+*.gz
+
+# Debug files
+debug-*.rs
 
 # Neo4j
 neo4j/data/

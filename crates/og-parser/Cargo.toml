@@ -1,0 +1,29 @@
+[package]
+name = "og-parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+og-types = { path = "../og-types" }
+og-utils = { path = "../og-utils" }
+tree-sitter = { workspace = true }
+tree-sitter-javascript = { workspace = true, optional = true }
+tree-sitter-typescript = { workspace = true, optional = true }
+tree-sitter-python = { workspace = true, optional = true }
+tree-sitter-c = { workspace = true, optional = true }
+rayon = { workspace = true }
+tracing = { workspace = true }
+dashmap = { workspace = true }
+anyhow = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.8"
+tracing-subscriber = { workspace = true }
+
+[features]
+default = ["js", "ts", "python", "c"]
+js = ["tree-sitter-javascript"]
+ts = ["tree-sitter-typescript"]
+python = ["tree-sitter-python"]
+c = ["tree-sitter-c"]

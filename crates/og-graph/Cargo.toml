@@ -1,0 +1,11 @@
+[package]
+name = "og-graph"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+og-types = { path = "../og-types" }
+petgraph = "0.6"
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }

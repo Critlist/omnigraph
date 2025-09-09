@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+  "extends": [],
+  "noStandardTags": false,
+  "tagDefinitions": [
+    {
+      "tagName": "@internal",
+      "syntaxKind": "modifier",
+      "allowMultiple": false
+    },
+    {
+      "tagName": "@tauri",
+      "syntaxKind": "modifier",
+      "allowMultiple": false
+    },
+    {
+      "tagName": "@rust",
+      "syntaxKind": "modifier",
+      "allowMultiple": false
+    },
+    {
+      "tagName": "@frontend",
+      "syntaxKind": "modifier",
+      "allowMultiple": false
+    },
+    {
+      "tagName": "@deprecated",
+      "syntaxKind": "modifier",
+      "allowMultiple": false
+    },
+    {
+      "tagName": "@experimental",
+      "syntaxKind": "modifier",
+      "allowMultiple": false
+    }
+  ],
+  "supportForTags": {
+    "@internal": true,
+    "@tauri": true,
+    "@rust": true,
+    "@frontend": true,
+    "@deprecated": true,
+    "@experimental": true,
+    "@param": true,
+    "@returns": true,
+    "@throws": true,
+    "@example": true,
+    "@see": true,
+    "@since": true
+  },
+  "reportUnsupportedHtmlElements": true
+} 

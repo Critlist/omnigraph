@@ -1,0 +1,36 @@
+{
+	"compilerOptions": {
+		"target": "ES2020",
+		"module": "ESNext",
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"sourceMap": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": "../../",
+		"paths": {
+			"@/visualization/*": ["src/visualization/*"],
+			"@/engine/*": ["src/engine/*"],
+			"@/types/*": ["src/types/*"],
+			"@tauri-apps/api": ["node_modules/@tauri-apps/api"]
+		}
+	},
+	"include": [
+		"../../src/**/*"
+	],
+	"exclude": [
+		"../../node_modules",
+		"../../dist",
+		"../../src-tauri"
+	]
+}

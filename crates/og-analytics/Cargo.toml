@@ -1,0 +1,20 @@
+[package]
+name = "og-analytics"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+og-types = { path = "../og-types" }
+og-graph = { path = "../og-graph" }
+og-db = { path = "../og-db" }
+neo4rs = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+petgraph = "0.6"
+rayon = "1.10"
+dashmap = "6.1"
+nalgebra = "0.33"
+ordered-float = "4.5"

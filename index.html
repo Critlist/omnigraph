@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Omnigraph - 3D Code Visualization</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+
+  <body>
+    <!-- NO CSP META TAG! FREEDOM! -->
+    
+    <div id="app" class="og-app">
+      <!-- Menu Bar -->
+      <og-menu-bar></og-menu-bar>
+      
+      <!-- Canvas Layer (Base) -->
+      <div id="canvas-layer" class="og-canvas-layer">
+        <div id="graph-container"></div>
+      </div>
+      
+      <!-- Docked Layer (CSS Grid) -->
+      <div id="docked-layer" class="og-docked-layer">
+        <!-- Left Panel -->
+        <div class="og-panel-left" data-panel="file-tree" style="display: none;">
+          <og-panel title="Explorer" panel-id="file-tree"></og-panel>
+        </div>
+        <div class="og-splitter og-splitter-v-left" style="display: none;"></div>
+        
+        <!-- Center Area (transparent for canvas) -->
+        <div class="og-center-area"></div>
+        
+        <!-- Right Panel -->
+        <div class="og-panel-right" data-panel="properties" style="display: none;">
+          <og-panel title="Properties" panel-id="properties"></og-panel>
+        </div>
+        <div class="og-splitter og-splitter-v-right" style="display: none;"></div>
+        
+        <!-- Bottom Panel -->
+        <div class="og-panel-bottom" data-panel="terminal" style="display: none;">
+          <og-panel title="Output" panel-id="terminal"></og-panel>
+        </div>
+        <div class="og-splitter og-splitter-h-bottom" style="display: none;"></div>
+      </div>
+      
+      <!-- Floating Layer -->
+      <div id="floating-layer" class="og-floating-layer"></div>
+      
+      <!-- HUD Layer -->
+      <div id="hud-layer" class="og-hud-layer">
+        <div class="og-hud-tl"></div>
+        <div class="og-hud-tr">
+          <div class="og-hud-metrics">
+            <span id="fps-counter">FPS: 60</span>
+            <span id="node-count">Nodes: 0</span>
+            <span id="link-count">Links: 0</span>
+          </div>
+        </div>
+        <div class="og-hud-bl">
+          <div class="og-hud-controls">
+            <button id="parse-btn" class="og-hud-btn" title="Parse Codebase">📁</button>
+            <button id="connect-btn" class="og-hud-btn" title="Connect Neo4j">🔌</button>
+            <button id="generate-btn" class="og-hud-btn" title="Generate Graph">🎨</button>
+            <button id="reset-btn" class="og-hud-btn" title="Reset View">🔄</button>
+            <button id="reset-app-btn" class="og-hud-btn" title="Reset App">🗑️</button>
+            <button id="toggle-panels-btn" class="og-hud-btn" title="Toggle Panels">📊</button>
+          </div>
+        </div>
+        <div class="og-hud-br">
+          <div class="og-hud-minimap" id="minimap"></div>
+        </div>
+        <div class="og-hud-center">
+          <div id="status" class="og-hud-status">Ready</div>
+          <!-- Progress bar -->
+          <div id="progress-container" class="og-hud-progress" style="display: none;">
+            <div class="og-progress-bar-bg">
+              <div id="progress-bar" class="og-progress-bar"></div>
+            </div>
+            <p id="progress-text" class="og-progress-text">0%</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Snap Zones (invisible) -->
+      <div id="snap-zones" class="og-snap-zones"></div>
+      
+      <!-- Accessibility live region -->
+      <div id="og-live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+      
+      <!-- Command Palette -->
+      <og-command-palette></og-command-palette>
+    </div>
+  </body>
+</html>

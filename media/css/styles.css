@@ -1,0 +1,211 @@
+/* Omnigraph styles - Add your CSS here */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#graph-container {
+    width: 100%;
+    height: 100vh;
+}
+
+/* Omnigraph WebView Styles */
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1e1e1e;
+    color: #cccccc;
+    overflow: hidden;
+}
+
+#graph-container {
+    width: 100%;
+    height: calc(100vh - 80px);
+    background-color: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.graph-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.placeholder-content h3 {
+    color: #ffffff;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.placeholder-content p {
+    color: #cccccc;
+    margin-bottom: 20px;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #3c3c3c;
+    border-top: 3px solid #007acc;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Controls */
+#controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #2d2d30;
+    border-top: 1px solid #3c3c3c;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+#controls button {
+    background-color: #0e639c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+#controls button:hover {
+    background-color: #1177bb;
+}
+
+#controls button:active {
+    background-color: #005a9e;
+}
+
+#search-container {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+#search-input {
+    background-color: #3c3c3c;
+    color: #cccccc;
+    border: 1px solid #5a5a5a;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    width: 200px;
+    transition: border-color 0.2s;
+}
+
+#search-input:focus {
+    outline: none;
+    border-color: #007acc;
+}
+
+#search-input::placeholder {
+    color: #969696;
+}
+
+/* Info Panel */
+#info-panel {
+    position: absolute;
+    bottom: 50px;
+    left: 10px;
+    background-color: rgba(45, 45, 48, 0.9);
+    color: #cccccc;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    max-width: 300px;
+    border: 1px solid #3c3c3c;
+    pointer-events: none;
+}
+
+#node-info {
+    margin: 0;
+}
+
+/* Graph Nodes */
+.graph-node {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.graph-node:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Mock Graph */
+.mock-graph {
+    position: relative;
+    color: #cccccc;
+}
+
+.nodes-container {
+    z-index: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    #controls {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 8px;
+    }
+    
+    #search-input {
+        width: 150px;
+    }
+    
+    #info-panel {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        margin: 10px;
+        max-width: none;
+    }
+    
+    #graph-container {
+        height: calc(100vh - 120px);
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2d2d30;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #5a5a5a;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6a6a6a;
+} 

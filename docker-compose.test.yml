@@ -1,0 +1,59 @@
+# Docker Compose for TestContainers local development
+# Use this when you want to run containers manually for debugging
+
+version: '3.8'
+
+services:
+  neo4j-test:
+    image: neo4j:5.28
+    container_name: omnigraph-neo4j-test
+    ports:
+      - "7687:7687"
+      - "7474:7474"
+    environment:
+      # Basic authentication
+      NEO4J_AUTH: neo4j/testpassword
+      
+      # Enable APOC procedures
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      
+      # File operations for testing
+      NEO4J_apoc_export_file_enabled: 'true'
+      NEO4J_apoc_import_file_enabled: 'true'
+      
+      # Memory settings for testing
+      NEO4J_dbms_memory_heap_initial_size: 512m
+      NEO4J_dbms_memory_heap_max_size: 1G
+      NEO4J_dbms_memory_pagecache_size: 256m
+      
+      # Development settings
+      NEO4J_dbms_security_auth_minimum_password_length: 4
+      NEO4J_dbms_logs_debug_level: INFO
+      
+    volumes:
+      # Persist data during development
+      - neo4j-test-data:/data
+      - neo4j-test-logs:/logs
+      - neo4j-test-import:/var/lib/neo4j/import
+      - neo4j-test-plugins:/plugins
+      
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      
+    networks:
+      - omnigraph-test
+
+networks:
+  omnigraph-test:
+    driver: bridge
+
+volumes:
+  neo4j-test-data:
+  neo4j-test-logs:
+  neo4j-test-import:
+  neo4j-test-plugins:

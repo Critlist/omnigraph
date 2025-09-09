@@ -1,0 +1,17 @@
+[package]
+name = "og-services"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+og-types = { path = "../og-types" }
+og-parser = { path = "../og-parser" }
+og-graph = { path = "../og-graph" }
+og-db = { path = "../og-db" }
+og-analytics = { path = "../og-analytics" }
+og-utils = { path = "../og-utils" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
