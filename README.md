@@ -6,6 +6,11 @@ A powerful desktop application for visualizing code dependencies and relationshi
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+⚠️ Disclaimer
+
+Omnigraph is released as-is under an open-source license for experimentation and learning.
+This project is a prototype — not stable, not optimized, and not intended for production.
+Expect sharp edges, weird ideas, and design decisions made more for vibe than polish.
 ## 🚀 Overview
 
 Omnigraph transforms your codebase into an interactive 3D visualization, helping you understand complex dependencies, identify architectural patterns, and navigate large projects with ease. Originally conceived as a VS Code extension, it has evolved into a standalone desktop application powered by Rust and Tauri for maximum performance and freedom.
