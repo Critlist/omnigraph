@@ -1,196 +1,186 @@
-# Omnigraph: 3D Codebase Visualization
+# Omnigraph
 
-A powerful desktop application for visualizing code dependencies and relationships as interactive 3D force-directed graphs. Built with Rust, Tauri, and Three.js to escape the limitations of VS Code's restrictive webview environment.
+3D codebase visualization engine. Parses source code into a navigable force-directed graph that doesn't look like garbage.
 
-![Status](https://img.shields.io/badge/status-alpha-orange)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+## What It Is
 
-## 🚀 Overview
+Omnigraph is a desktop application that turns codebases into interactive 3D visualizations. It uses Tree-sitter to parse multiple languages, builds a dependency graph, and renders it in real-time using Three.js and WebGL.
 
-Omnigraph transforms your codebase into an interactive 3D visualization, helping you understand complex dependencies, identify architectural patterns, and navigate large projects with ease. Originally conceived as a VS Code extension, it has evolved into a standalone desktop application powered by Rust and Tauri for maximum performance and freedom.
+The result is a galaxy-like view of your code where you can see architecture, coupling, module boundaries, and structural problems at a glance. Node size reflects importance. Colors indicate type. Distance shows coupling strength.
 
-## ✨ Features
+Built on Tauri (Rust backend), TypeScript frontend, and a custom parsing pipeline. Handles thousands of nodes without choking.
 
-- **🎨 Interactive 3D Visualization**: Navigate your codebase in a beautiful force-directed 3D graph
-- **⚡ Rust-Powered Parsing**: Lightning-fast AST parsing with tree-sitter for JavaScript, TypeScript, and Python
-- **📊 Real-time Progress**: Visual feedback during parsing with percentage completion
-- **🔍 Smart Filtering**: Automatically handles unresolved imports and external dependencies
-- **📐 Responsive Canvas**: Automatic resizing and optimal rendering on any screen size
-- **🔄 Hot Reset**: Quick reset functionality for testing and debugging
-- **🎯 Node Details**: Click nodes to see file paths, metrics, and relationships
+## The Original Experiment
 
-## 📦 Installation
+Started as a test: how far could I push Claude Code on a technically deep project with minimal manual intervention?
 
-### Prerequisites
+Turns out: pretty far.
 
-- [Node.js](https://nodejs.org/) (v16 or higher)
-- [pnpm](https://pnpm.io/) (recommended) or npm
-- [Rust](https://rustup.rs/) (latest stable)
-- [Tauri Prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites)
+Also wanted to see if a modern 3D rendering pipeline could handle thousands of AST-derived nodes in real-time. Built it as a Tauri app to escape VS Code's CSP restrictions. Both experiments worked. Then I changed jobs and forgot I wrote it.
 
-### Quick Start
+## Where It Stands
+
+Successfully renders 3,250 nodes and 3,079 edges from real codebases. The visualization is functional and the core pipeline works.
+
+**What's Working:**
+- Multi-language AST parsing (JavaScript, TypeScript, Python, C)
+- Parallel batch processing with progress indicators
+- Dependency graph construction with import resolution
+- 3D force-directed visualization with smooth rendering
+- Interactive navigation (rotate, zoom, pan, click)
+- Real-time progress UI during parsing
+- Color-coded node types
+- Semantic structure visible in the layout
+- Desktop app with panels, file tree, keyboard shortcuts
+
+**What's Implemented But Not Visible:**
+- 15+ graph algorithms (PageRank, betweenness, community detection, etc.)
+- Composite metrics (importance, risk, chokepoint scoring)
+- Analytics engine with timeout protection and error recovery
+
+**What's Stubbed Out:**
+- Neo4j integration (5% done)
+- Metrics display in UI (computed but not shown)
+
+Accidentally ended up with a visualization tool that looks like a sci-fi HUD. The hard technical work is done. The remaining gap is UI wiring.
+
+## Demo
+
+Video showing 3,250-node galaxy explosion with real-time parsing and navigation:
+
+[Omnigraph POC Demo](https://www.youtube.com/watch?v=mRjxukOcLqQ)
+
+## Architecture
+
+**Backend (Rust):**
+- Tree-sitter parsers for JS/TS/Python/C
+- Petgraph for graph data structures
+- Rayon for parallel processing
+- Analytics engine with 15+ algorithms
+- Tauri commands for frontend communication
+
+**Frontend (TypeScript):**
+- 3d-force-graph for WebGL rendering
+- Lit web components for UI
+- Event-driven state management
+- Panel system with docking and floating modes
+- Command palette (VS Code style)
+
+**Workspace:**
+- 11 Rust crates organized by domain
+- Modular metrics system (centrality, community, quality, risk)
+- ~12,000 lines of Rust
+- ~7,600 lines of TypeScript
+
+## Installation
+
+Requires Node.js, Rust, and Tauri prerequisites.
 
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/omnigraph.git
 cd omnigraph
-
-# Install dependencies
 pnpm install
-
-# Run in development mode
 pnpm tauri:dev
+```
 
-# Build for production
+Build for production:
+```bash
 pnpm tauri:build
 ```
 
-### Linux/Wayland Users
+## Usage
 
-If you're using Wayland (especially with Hyprland), the app includes compatibility flags in the `pnpm tauri:dev` command. These are automatically applied.
+1. Launch the app
+2. Click "Parse Codebase" and select a directory
+3. Wait for parsing (progress bar shows status)
+4. Click "Generate Graph"
+5. Navigate the 3D view:
+   - Left-click drag: rotate
+   - Right-click drag: pan
+   - Scroll: zoom
+   - Click node: focus camera
 
-## 🎮 Usage
+## What's Left
 
-1. **Launch the Application**: Run `pnpm tauri:dev` or use the built executable
-2. **Parse a Codebase**: Click "📁 Parse Codebase" and select your project directory
-3. **Generate Graph**: Click "🎨 Generate Graph" to visualize the parsed data
-4. **Explore**: 
-   - Rotate: Left-click and drag
-   - Zoom: Scroll wheel
-   - Pan: Right-click and drag
-   - Node Info: Click on any node to focus
-5. **Reset**: Click "🗑️ Reset App" to clear and start fresh
+It's about 75% of a usable tool. The remaining 25% is mostly polish and tuning on the core engines.
 
-## 🏗️ Architecture
+**High Priority:**
+- Wire computed metrics to UI (HUD overlay, properties panel)
+- Visual encoding of risk/importance on nodes
+- Node inspector with full metric breakdown
+- Metric filtering and sorting controls
+- Export metrics to JSON
 
-### Technology Stack
+**Medium Priority:**
+- Fix destructured import detection in JavaScript parser
+- Optimize community detection (currently disabled for performance)
+- Add incremental parsing for large codebases
+- Improve C parser coverage
+- Better error messages
 
-- **Backend**: Rust with Tauri framework
-- **Parser**: Tree-sitter for language-agnostic AST parsing
-- **Graph Engine**: Petgraph for graph algorithms
-- **Frontend**: TypeScript with Three.js
-- **3D Rendering**: 3d-force-graph for WebGL visualization
-- **Build System**: Vite for frontend, Cargo for Rust
+**Low Priority:**
+- Finish Neo4j integration or remove it cleanly
+- Add more language parsers (Rust, Go, Java)
+- Git history analysis for churn metrics
+- Cyclomatic complexity from AST
+- CLI mode for headless analysis
+- Architecture overlay modes (layers, boundaries, violations)
 
-### Supported Languages
+## Current Status
 
-- ✅ JavaScript (.js, .jsx)
-- ✅ TypeScript (.ts, .tsx)
-- ✅ Python (.py)
-- 🔜 Rust (.rs) - Coming soon
-- 🔜 Go (.go) - Planned
-- 🔜 Java (.java) - Planned
+Early beta. Functional core, incomplete UI integration, visually complete.
 
-## 🛠️ Development
+The parsing engine works. The graph rendering works. The analytics engine computes everything correctly. The gap is displaying computed data in the interface.
 
-### Project Structure
+Not production-ready. Not optimized. Not stable. But it renders 3,250 nodes in 3D and looks good doing it.
 
-```
-omnigraph/
-├── src-tauri/          # Rust backend
-│   ├── src/
-│   │   ├── engine/     # Core parsing and graph engine
-│   │   └── lib.rs      # Tauri commands
-│   └── Cargo.toml
-├── src/                # Frontend
-│   ├── main.ts         # Application entry
-│   └── visualization/  # 3D graph components
-├── package.json
-└── README.md
-```
+## Goals
 
-### Key Commands
+- Open-source dev tool for architecture exploration
+- Code forensics and dependency analysis
+- Teaching aid for software architecture
+- Visual debugging of coupling and structure
+- Cool factor
 
-```bash
-# Development
-pnpm tauri:dev         # Run with hot-reload
-pnpm test              # Run tests
-pnpm lint              # Lint code
+## Technical Details
 
-# Building
-cargo tauri build               # Production build
-cargo tauri build --debug       # Debug build
+**Supported Languages:**
+- JavaScript (.js, .jsx, .mjs, .cjs)
+- TypeScript (.ts, .tsx)
+- Python (.py)
+- C (.c, .h) - partial support
 
-# Platform-specific builds
-cargo tauri build --target x86_64-pc-windows-msvc   # Windows
-cargo tauri build --target x86_64-apple-darwin      # macOS Intel
-cargo tauri build --target aarch64-apple-darwin     # macOS M1/M2
-cargo tauri build --target x86_64-unknown-linux-gnu # Linux
-```
+**Graph Algorithms Implemented:**
+- PageRank with convergence detection
+- Betweenness centrality (sampled for large graphs)
+- Closeness centrality
+- Degree centrality (in/out/total)
+- Eigenvector centrality
+- Clustering coefficient
+- K-core decomposition
+- Louvain community detection
+- Coupling and cohesion metrics
+- Risk scoring and chokepoint detection
 
-### Adding Language Support
+**Performance:**
+- Handles 3,000+ nodes smoothly
+- Parallel parsing with Rayon
+- Timeout protection on expensive algorithms
+- Fallback mechanisms for edge cases
+- Progress reporting throughout pipeline
 
-1. Add tree-sitter grammar to `Cargo.toml`
-2. Create parser module in `src-tauri/src/engine/parser/`
-3. Implement the `Parser` trait
-4. Register in `ParserManager`
+## Known Issues
 
-See `CLAUDE.md` for detailed development guidelines.
+- Large codebases (>10k files) take time to parse
+- Community detection too slow for production (disabled)
+- Import resolution has edge cases (destructured imports, dynamic requires)
+- Metrics computed but not displayed
+- No incremental parsing yet
 
-## 🚧 Roadmap
+## License
 
-### Current Status: Alpha
+MIT
 
-- [x] Core Rust parsing engine
-- [x] Tree-sitter integration
-- [x] 3D force-directed graph
-- [x] Progress indicators
-- [x] Reset functionality
-- [x] Responsive canvas
+## Contact
 
-### Next Up
-
-- [ ] Import path resolution
-- [ ] Neo4j integration for persistence
-- [ ] Graph state save/load
-- [ ] VS Code extension wrapper
-- [ ] More language parsers
-- [ ] Graph analytics (PageRank, centrality)
-- [ ] Export to various formats (JSON, GraphML)
-
-### Future Vision
-
-- [ ] AI-powered code insights
-- [ ] Team collaboration features
-- [ ] Git history visualization
-- [ ] Performance profiling overlay
-- [ ] Custom graph layouts
-- [ ] Plugin system
-
-## 🐛 Known Issues
-
-- Import statements to external packages create orphaned edges (filtered out)
-- Large codebases (>10,000 files) may take time to parse
-- Wayland requires X11 compatibility mode (handled automatically)
-
-See `TODO.md` for complete issue tracking.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Tauri](https://tauri.app/) - For the amazing desktop framework
-- [Tree-sitter](https://tree-sitter.github.io/) - For robust language parsing
-- [Three.js](https://threejs.org/) - For 3D graphics
-- [3d-force-graph](https://github.com/vasturiano/3d-force-graph) - For the force-directed layout
-
-## 📬 Contact
-
-Project Link: [https://github.com/yourusername/omnigraph](https://github.com/yourusername/omnigraph)
-
----
-
-**Built with ❤️ to escape the tyranny of VS Code's CSP restrictions**
+Project link: https://github.com/Critlist/omnigraph
