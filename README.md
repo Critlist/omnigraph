@@ -1,6 +1,6 @@
 # Omnigraph
 
-3D codebase visualization engine. Parses source code into a navigable force-directed graph that doesn't look like garbage.
+3D codebase visualization engine. Parses source code into a navigable force-directed graph.
 
 ## Demo
 
