@@ -16,9 +16,9 @@ Started as a test: how far could I push Claude Code on a technically deep projec
 
 Turns out: pretty far.
 
-Also wanted to see if a modern 3D rendering pipeline could handle thousands of AST-derived nodes in real-time. Built it as a Tauri app to escape VS Code's CSP restrictions. Both experiments worked. Then I changed jobs and forgot I wrote it.
-
 ## Where It Stands
+
+Currently build is failing due to dependency conflicts. Currently working as quickly as I can to rectify this. 
 
 Successfully renders 3,250 nodes and 3,079 edges from real codebases. The visualization is functional and the core pipeline works.
 
