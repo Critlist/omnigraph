@@ -48,7 +48,7 @@ Accidentally ended up with a visualization tool that looks like a sci-fi HUD. Th
 
 Video showing 3,250-node galaxy explosion with real-time parsing and navigation:
 
-[Omnigraph POC Demo](https://www.youtube.com/watch?v=mRjxukOcLqQ)
+[![Demo Video](https://img.youtube.com/vi/mRjxukOcLqQ/0.jpg)](https://www.youtube.com/watch?v=mRjxukOcLqQ)
 
 ## Architecture
 
