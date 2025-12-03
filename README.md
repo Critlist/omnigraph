@@ -2,6 +2,12 @@
 
 3D codebase visualization engine. Parses source code into a navigable force-directed graph that doesn't look like garbage.
 
+## Demo
+
+Video showing 3,250-node galaxy explosion with real-time parsing and navigation:
+
+[![Demo Video](https://img.youtube.com/vi/mRjxukOcLqQ/0.jpg)](https://www.youtube.com/watch?v=mRjxukOcLqQ)
+
 ## What It Is
 
 Omnigraph is a desktop application that turns codebases into interactive 3D visualizations. It uses Tree-sitter to parse multiple languages, builds a dependency graph, and renders it in real-time using Three.js and WebGL.
@@ -42,13 +48,7 @@ Successfully renders 3,250 nodes and 3,079 edges from real codebases. The visual
 - Neo4j integration (5% done)
 - Metrics display in UI (computed but not shown)
 
-Accidentally ended up with a visualization tool that looks like a sci-fi HUD. The hard technical work is done. The remaining gap is UI wiring.
-
-## Demo
-
-Video showing 3,250-node galaxy explosion with real-time parsing and navigation:
-
-[![Demo Video](https://img.youtube.com/vi/mRjxukOcLqQ/0.jpg)](https://www.youtube.com/watch?v=mRjxukOcLqQ)
+Accidentally ended up with a visualization tool that looks like a sci-fi HUD. The remaining gap is UI wiring.
 
 ## Architecture
 
