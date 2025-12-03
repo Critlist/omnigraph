@@ -6,8 +6,7 @@
 
 Video showing 3,250-node galaxy explosion with real-time parsing and navigation:
 
-[![Watch on YouTube](https://img.shields.io/badge/▶%20Watch%20Demo-red?logo=youtube&style=for-the-badge)](https://www.youtube.com/watch?v=mRjxukOcLqQ)
-
+[![Demo Video](https://img.youtube.com/vi/mRjxukOcLqQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=mRjxukOcLqQ)
 
 ## What It Is
 
