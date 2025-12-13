@@ -1,43 +1,52 @@
 # TODO
 
-## 🟡 IN PROGRESS - Analytics Engine Crashes (Pending Testing)
+## 🟡 IN PROGRESS - C Parser & Graph Building Issues
 
-### Priority 0: Fix Analytics Crashes (PENDING VERIFICATION)
+### Priority 0: Fix Import Relationships & Graph Connectivity
 
-#### Root Causes Identified and Addressed
+#### Issues Identified (Dec 9, 2024)
 
-- ✅ Fixed division by zero in centrality metrics for graphs with ≤1 nodes
-- ✅ Fixed unwrap panics in sorting operations (metrics/mod.rs)
-- ✅ Fixed matrix operations failures in eigenvector centrality for disconnected graphs
-- ✅ Added bounds checking in k-core decomposition (prevents infinite loops)
-- ✅ Added comprehensive error handling for edge cases (self-loops, disconnected components)
-- ✅ Fixed NaN/Infinity handling in community detection and risk analysis
+##### C Parser Import Resolution
+- ✅ Fixed file ID generation to use consistent hashing
+- ✅ Added proper path resolution for relative includes  
+- ✅ Resolved include paths now match actual parsed file IDs
+- ✅ Added `pnpm tauri:dev:log` for logging to omnigraph.log file
 
-#### Fixes Implemented (Awaiting Verification)
+##### Remaining Issues
+- ⚠️ ~30 files (out of 79) appear as disconnected nodes despite having includes
+- ⚠️ 9 import relationships created by C parser don't make it to LOD system  
+- ⚠️ Graph builder drops relationships when target nodes don't exist (system headers)
+- ⚠️ Some import relationships lost between parser output and graph builder input
 
-- ✅ Added panic catching wrapper for all metric calculations
-- ✅ Increased timeout to 30 seconds with better error messages
-- ✅ Sequential execution mode for debugging
-- ✅ Added extensive logging throughout the pipeline to identify failure points
-- ✅ Multiple layers of fallback mechanisms
-- ✅ Protected progress reporting to prevent UI update crashes
-- ✅ Comprehensive edge case tests added (all passing in isolation)
+#### Root Causes Found
 
-#### Additional Debugging Added
+1. **Graph Builder Filtering** (builder.rs:86-87): Only adds relationships if BOTH nodes exist in node_map
+2. **System Headers**: Imports to fcntl.h, unistd.h etc. dropped because those files aren't parsed
+3. **Data Flow Issue**: Some relationships created by parser don't reach LOD system
+4. **Multiple Codebases**: /src/ and /docs/historical/original-source/ create separate clusters
 
-- ✅ [ANALYZE] logs from Tauri command handler
-- ✅ [ENGINE] logs from engine_v2.rs
-- ✅ [ANALYTICS] logs from analytics library
-- ✅ [ENGINE-ANALYTICS] logs from analytics engine
-- ✅ [PROGRESS] logs for each progress report
+**Status**: Edges ARE showing for ~60% of files. Main `hack.h` cluster connects properly. Issue is with remaining disconnected nodes.
 
-**Status**: Fixes implemented but still experiencing silent crashes. Extensive logging added to identify exact failure point. Fallback mechanism in place but needs testing to confirm it's working properly.
+**Next Steps**:
+- [ ] Investigate why certain import relationships don't flow from parser → graph builder → LOD
+- [ ] Consider creating placeholder nodes for external/system includes
+- [ ] Fix data flow issue causing ~30% of files to appear disconnected
+- [ ] Add option to filter out system includes or handle them differently
 
-**Next Steps**: 
-- [ ] Test with various codebases to verify fixes
-- [ ] Monitor console output to identify exact crash location
-- [ ] Verify fallback to basic analysis is working
-- [ ] May need to investigate if crash is happening outside analytics pipeline
+### Priority 1: Performance & UI Issues
+
+#### Analytics Engine Performance
+- ✅ Commented out Louvain community detection (O(n²) complexity) for faster debugging
+- ✅ Fixed betweenness centrality with sampling (was O(n³))
+- ✅ Added panic catching and error recovery
+- ✅ Cleaned up debug console logs
+
+#### Remaining Performance Issues  
+- [ ] Progress bar disappears/reappears between 80-100%
+- [ ] Add UI checkboxes for selecting which analyses to run
+- [ ] Create backend configuration for selective analysis
+- [ ] Add progressive loading - show graph immediately, add analytics as they complete
+- [ ] Implement smart defaults - auto-disable expensive analyses for large graphs
 
 ## 🚨 CRITICAL PATH TO MVP - Wire Analytics to UI
 
