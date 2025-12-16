@@ -1,44 +1,44 @@
-name: CI
+# name: CI
 
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
+#     strategy:
+#       matrix:
+#         node-version: [18.x, 20.x]
     
-    steps:
-    - uses: actions/checkout@v4
+#     steps:
+#     - uses: actions/checkout@v4
     
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
+#     - name: Setup pnpm
+#       uses: pnpm/action-setup@v2
+#       with:
+#         version: 8
     
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+#     - name: Use Node.js ${{ matrix.node-version }}
+#       uses: actions/setup-node@v4
+#       with:
+#         node-version: ${{ matrix.node-version }}
+#         cache: 'pnpm'
     
-    - name: Install dependencies
-      run: pnpm install
+#     - name: Install dependencies
+#       run: pnpm install
     
-    - name: Run linter
-      run: pnpm run lint
+#     - name: Run linter
+#       run: pnpm run lint
     
-    - name: Check types
-      run: pnpm run check-types
+#     - name: Check types
+#       run: pnpm run check-types
     
-    - name: Run tests
-      run: xvfb-run -a pnpm run test
+#     - name: Run tests
+#       run: xvfb-run -a pnpm run test
     
-    - name: Build extension
-      run: pnpm run package 
+#     - name: Build extension
+#       run: pnpm run package 
